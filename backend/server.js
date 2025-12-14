@@ -11,9 +11,13 @@ const app = express();
 /* ===============================
    MIDDLEWARE
 ================================ */
-app.use(cors({
-  origin: "*", // allow all origins (safe for portfolio)
-}));
+app.use(
+  cors({
+    origin: "*", // portfolio-safe
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 app.use(express.json());
 
 /* ===============================
@@ -69,6 +73,16 @@ const fallbackMap = {
 /* ===============================
    ROUTES
 ================================ */
+
+// ✅ Allow CORS preflight
+app.options("/api/chat", cors());
+
+// ✅ Allow GET for health/test (prevents 405)
+app.get("/api/chat", (req, res) => {
+  res.json({ reply: "Please ask a question." });
+});
+
+// ✅ Main POST chat endpoint
 app.post("/api/chat", async (req, res) => {
   const { message } = req.body;
 
@@ -76,7 +90,7 @@ app.post("/api/chat", async (req, res) => {
     return res.json({ reply: "Please ask a question." });
   }
 
-  // 1️⃣ OpenAI
+  // 1️⃣ Try OpenAI
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -89,11 +103,11 @@ app.post("/api/chat", async (req, res) => {
     return res.json({
       reply: completion.choices[0].message.content,
     });
-  } catch {
-    console.warn("⚠️ OpenAI failed, trying Groq...");
+  } catch (err) {
+    console.warn("⚠️ OpenAI failed, switching to Groq...");
   }
 
-  // 2️⃣ Groq
+  // 2️⃣ Try Groq
   try {
     const completion = await groq.chat.completions.create({
       model: "llama3-8b-8192",
@@ -106,11 +120,11 @@ app.post("/api/chat", async (req, res) => {
     return res.json({
       reply: completion.choices[0].message.content,
     });
-  } catch {
+  } catch (err) {
     console.warn("⚠️ Groq failed, using fallback...");
   }
 
-  // 3️⃣ Static fallback
+  // 3️⃣ Static fallback (never fails)
   const msg = message.toLowerCase();
   if (msg.includes("name")) return res.json({ reply: fallbackMap.name });
   if (msg.includes("experience")) return res.json({ reply: fallbackMap.experience });
@@ -123,7 +137,7 @@ app.post("/api/chat", async (req, res) => {
 });
 
 /* ===============================
-   HEALTH CHECK (IMPORTANT)
+   ROOT HEALTH CHECK
 ================================ */
 app.get("/", (req, res) => {
   res.send("✅ Backend is running");
