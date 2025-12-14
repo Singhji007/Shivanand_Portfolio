@@ -13,12 +13,12 @@ export default function Chatbot() {
 
   const messagesEndRef = useRef(null);
 
-  // 🧠 Save session memory
+  // Save session memory
   useEffect(() => {
     sessionStorage.setItem("chat_messages", JSON.stringify(messages));
   }, [messages]);
 
-  // ⬇️ Auto-scroll
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
@@ -33,22 +33,22 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/chat", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText })
+        body: JSON.stringify({ message: userText }),
       });
 
       const data = await res.json();
 
       setMessages(prev => [
         ...prev,
-        { from: "bot", text: data.reply || "No response from AI." }
+        { from: "bot", text: data.reply || "No response from AI." },
       ]);
-    } catch {
+    } catch (err) {
       setMessages(prev => [
         ...prev,
-        { from: "bot", text: "⚠️ AI server not reachable." }
+        { from: "bot", text: "⚠️ AI server not reachable." },
       ]);
     }
 
@@ -63,13 +63,11 @@ export default function Chatbot() {
 
       {open && (
         <div className="chatbox">
-          {/* 🎨 Header */}
           <div className="chatbox-header">
             <span>Ask AI</span>
             <button onClick={() => setOpen(false)}>✕</button>
           </div>
 
-          {/* Messages */}
           <div className="chatbox-messages">
             {messages.map((m, i) => (
               <p key={i} className={m.from}>{m.text}</p>
@@ -78,7 +76,6 @@ export default function Chatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="chatbox-input">
             <input
               value={input}
