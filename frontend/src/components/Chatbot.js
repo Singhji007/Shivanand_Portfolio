@@ -13,12 +13,12 @@ export default function Chatbot() {
 
   const messagesEndRef = useRef(null);
 
-  // Save session memory
+  // Save chat to session storage
   useEffect(() => {
     sessionStorage.setItem("chat_messages", JSON.stringify(messages));
   }, [messages]);
 
-  // Auto-scroll
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
@@ -27,15 +27,18 @@ export default function Chatbot() {
     if (!input.trim()) return;
 
     const userText = input;
-
     setMessages(prev => [...prev, { from: "user", text: userText }]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const API_URL = process.env.REACT_APP_API_URL;
+
+      const res = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ message: userText }),
       });
 
@@ -45,7 +48,7 @@ export default function Chatbot() {
         ...prev,
         { from: "bot", text: data.reply || "No response from AI." },
       ]);
-    } catch (err) {
+    } catch (error) {
       setMessages(prev => [
         ...prev,
         { from: "bot", text: "⚠️ AI server not reachable." },
@@ -70,7 +73,9 @@ export default function Chatbot() {
 
           <div className="chatbox-messages">
             {messages.map((m, i) => (
-              <p key={i} className={m.from}>{m.text}</p>
+              <p key={i} className={m.from}>
+                {m.text}
+              </p>
             ))}
             {loading && <p className="bot">Typing...</p>}
             <div ref={messagesEndRef} />
