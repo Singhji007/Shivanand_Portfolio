@@ -84,7 +84,7 @@ export default function About() {
           </div>
 
           <div className="flip-back">
-            <p className="dob">DOB: 07 July 2002</p>
+            <p className="dob">DOB: 12 Febraury 2004</p>
             <p className="quote">“Turning data into decisions.”</p>
           </div>
         </div>
